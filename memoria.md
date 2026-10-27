@@ -82,8 +82,15 @@ dueño.
 | **Miguel Angel Nuñez Gómez** | Backend (API) y NoSQL: MongoDB Atlas + Redis, JWT, caché, rate limit, moderación, chat, push |
 | **Emanuel Cruz Cruz** | Pruebas unitarias, de seguridad, de integración, de nube y de regresión |
 
-Organización GitHub: **PETMATE-APP'S**. Repositorio del backend:
-`backend-petmate-nosdd-aspnetcore`.
+Organización GitHub: **PETMATE-APP-S**.
+
+| Repositorio | Qué es | Visibilidad |
+|---|---|---|
+| `app-petmate-kotlin` | **Este**: app móvil Android (Kotlin + Compose) | privado |
+| `backend-petmate-nosdd-aspnetcore` | Backend (API REST en ASP.NET Core) | privado |
+
+URL de este repo: https://github.com/PETMATE-APP-S/app-petmate-kotlin
+Ramas: `main` (estable) y `develop`.
 
 > ⚠️ Existe un proyecto gemelo con otra profesora en la organización
 > `PetMate-AMEL`. **No se mezclan repositorios, commits, tableros ni entregas.**
@@ -121,6 +128,15 @@ Organización GitHub: **PETMATE-APP'S**. Repositorio del backend:
   por indicación del profesor.
 - **No se ejecuta ninguna tarea**: el profesor dio instrucción explícita de
   esperar.
+- Se verifica en PowerShell que la estructura está completa y que **0 de 32**
+  tareas se ejecutaron (evidencia en `docs/evidencia-verificacion.md`).
+- Se crea el repositorio **`app-petmate-kotlin`** (privado) en la organización
+  **PETMATE-APP-S**, con ramas `main` y `develop`. Primer commit: la estructura
+  SDD completa, sin código de las capas.
+- No se pudo correr la auditoría en **OpenCode**: la cuenta devuelve
+  `Free usage limit reached` incluso con un mensaje de una palabra y tras
+  cambiar de modelo. El prompt queda listo en
+  `docs/prompt-auditoria-opencode.md` para cuando se restablezca la cuota.
 - Pendiente para la próxima clase: instrucciones sobre las specs de
   funcionalidad específica de backend y móvil.
 
