@@ -4,8 +4,8 @@
 > debe ser coherente con este archivo. Si algo contradice la constitución, la
 > constitución gana y el otro documento se corrige.
 >
-> Versión: 1.0.0 · Fecha: 27/10/2026 · Ratificada por: Adrián Adonai García Jiménez
-> Proyecto: app móvil Android de PetMate · Org GitHub: PETMATE-APP'S
+> Versión: 1.1.0 · Fecha: 29/10/2026 · Ratificada por: Adrián Adonai García Jiménez
+> Proyecto: app móvil Android de PetMate · Org GitHub: PETMATE-APP-S
 
 ---
 
@@ -14,7 +14,7 @@
 | Campo | Valor |
 |---|---|
 | Producto | PetMate — carnet digital de salud de mascotas, QR para compartir historial y mapa de negocios afiliados |
-| Este repositorio | Aplicación móvil Android (`PetMateEdel`) |
+| Este repositorio | Aplicación móvil Android (`app-petmate-kotlin`, carpeta local `PetMateEdel`) |
 | Repositorio hermano | `backend-petmate-nosdd-aspnetcore` (API REST en ASP.NET Core) |
 | Metodología | Spec Driven Development (SDD) + DevSecOps |
 | Desarrollo | Mediante prompts y agentes de IA |
@@ -57,7 +57,8 @@ data (Room, Retrofit, repos) ──→  domain
 ### P4 — Offline-first
 La base de datos local (Room/SQLite) es la fuente de verdad para la UI. La red
 actualiza la base local; la UI observa la base local. La app debe abrir y
-mostrar datos sin conexión.
+mostrar datos sin conexión. Las escrituras hechas sin conexión se encolan y se
+reconcilian al recuperar la red; ninguna se pierde ni se duplica en silencio.
 
 ### P5 — Estado unidireccional e inmutable
 Un `ViewModel` por pantalla. Expone **un** `StateFlow<UiState>` inmutable y
@@ -98,6 +99,13 @@ ella, nunca de un incremento improvisado. Cada despliegue registra su versión.
 Todo cambio se puede rastrear: tarea → spec → requisito (`RF-xx` / `RNF-xx`).
 Un commit que no se puede ligar a una tarea no debería existir.
 
+### P13 — Moderación antes de almacenar
+Todo texto, imagen o video aportado por el usuario pasa por el servicio de
+moderación de la nube **antes** de persistirse o enviarse. Si es inapropiado,
+se rechaza con un mensaje claro y no se guarda. La arquitectura deja un único
+punto de intercepción; la política, el proveedor y los umbrales se definen en
+su propia spec.
+
 ---
 
 ## 2. Stack tecnológico obligatorio
@@ -119,6 +127,9 @@ Un commit que no se puede ligar a una tarea no debería existir.
 | Pruebas de UI | Compose UI Test + Espresso | |
 | Calidad | ktlint, detekt | Bloquean el pipeline |
 | CI/CD | GitHub Actions | |
+| Nube (consumo) | Azure Container Apps por HTTPS | La infraestructura vive en otro repositorio; la app solo consume |
+| Publicación | Google Play (AAB firmado) desde GitHub Actions | Track interno → prueba cerrada antes de producción |
+| Moderación | API de moderación de la nube (Azure) | Proveedor y umbrales se fijan en su spec; la app solo llama |
 
 **Compatibilidad:** `minSdk` 24 (Android 7.0) o superior según lo exijan los
 lineamientos; `targetSdk` y `compileSdk` en la versión estable más reciente.
@@ -148,14 +159,19 @@ PetMateEdel/
     ├── main/java/com/example/petmateedel/
     │   ├── PetMateApplication.kt
     │   ├── MainActivity.kt
-    │   ├── core/                ← utilidades transversales, Result, errores
+    │   ├── core/                ← Result, errores, permisos, conectividad, tiempo
     │   ├── di/                  ← módulos de Hilt
     │   ├── domain/              ← modelos, interfaces de repositorio, casos de uso
     │   ├── data/
     │   │   ├── local/           ← Room: entidades, DAOs, base de datos
     │   │   ├── remote/          ← Retrofit: servicios, DTOs, interceptores
     │   │   ├── mapper/          ← DTO ↔ entidad ↔ modelo de dominio
-    │   │   └── repository/      ← implementaciones de los repositorios
+    │   │   ├── repository/      ← implementaciones de los repositorios
+    │   │   ├── session/         ← credenciales cifradas y estado de sesión
+    │   │   ├── cache/           ← política de expiración (memoria + disco)
+    │   │   ├── sync/            ← cola de escrituras y reconciliación offline
+    │   │   ├── moderation/      ← punto de intercepción de contenido
+    │   │   └── push/            ← token FCM y recepción de mensajes
     │   └── ui/
     │       ├── navigation/      ← rutas y NavHost
     │       ├── theme/           ← colores, tipografía, tema
@@ -186,6 +202,7 @@ Una carpeta por capa. Un paquete por feature dentro de `ui`. Nada de carpetas
 - Cambiar el esquema de Room (entidades, migraciones).
 - Modificar `constitution.md`, `AGENTS.md` o cualquier `spec.md` aprobada.
 - Tocar `AndroidManifest.xml` (permisos, componentes).
+- Configurar credenciales de publicación en Google Play o en Firebase.
 - Cambiar la configuración del pipeline de CI/CD.
 - Cambiar `minSdk`, `targetSdk`, `applicationId` o el `namespace`.
 - Hacer `git push`, abrir un PR o publicar en Google Play.
@@ -210,6 +227,7 @@ Una carpeta por capa. Un paquete por feature dentro de `ui`. Nada de carpetas
 | Cobertura de pruebas en `data` (repos y mappers) | ≥ 70 % |
 | ViewModels con prueba unitaria | 100 % |
 | Advertencias de `ktlint` / `detekt` | 0 |
+| Pruebas de seguridad | 0 hallazgos críticos o altos |
 | Compilación con warnings nuevos | no se aceptan |
 | Build de `release` | debe compilar en todo momento |
 | Hilos | ninguna operación de I/O en el hilo principal |

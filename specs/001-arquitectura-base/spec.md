@@ -3,7 +3,7 @@
 > Unidad de trabajo: `001-arquitectura-base`
 > Estado: **redactada, pendiente de aprobación**
 > Fecha: 27/10/2026 · Autor: Adrián Adonai García Jiménez
-> Alineada con: [`constitution.md`](../../constitution.md) v1.0.0
+> Alineada con: [`constitution.md`](../../constitution.md) v1.1.0
 
 ---
 
@@ -22,6 +22,10 @@ SUPUESTOS QUE ESTOY HACIENDO:
    no contra endpoints reales de negocio.
 5. minSdk queda en 24 hasta que el profesor confirme si los lineamientos
    obligan API 26.
+6. El backend se despliega en **Azure Container Apps** detrás de su balanceador
+   y se consume por HTTPS; la URL y el health check exactos son Q-02.
+7. La primera publicación va a un **track interno/cerrado** de Google Play; el
+   rollout a producción pertenece a la spec de liberación.
 → Corríjanme antes de aprobar esta spec.
 ```
 
@@ -72,6 +76,13 @@ todas esas decisiones ya están tomadas, implementadas y probadas.
 | A-13 | Pipeline de CI/CD que compila, prueba, revisa seguridad y genera el artefacto firmable |
 | A-14 | Configuración de build por entorno y endurecimiento del `release` |
 | A-15 | Observabilidad mínima: registro de eventos y errores con un logger propio |
+| A-16 | Publicación en Google Play desde CI: AAB firmado, versión de la matriz y subida a track interno/cerrado |
+| A-17 | Consumo del backend en Azure por HTTPS, con resiliencia ante el balanceador (timeouts, reintentos, health) |
+| A-18 | Mecanismo de permisos en el momento de uso, con explicación previa y degradación si se niegan |
+| A-19 | Escrituras offline: cola persistente y reconciliación al recuperar la red |
+| A-20 | Punto único de intercepción de contenido (texto, imagen, video) antes de almacenar |
+| A-21 | Base de notificaciones push: token, registro tras login y recepción desacoplada |
+| A-22 | Pruebas de seguridad ejecutables en el pipeline |
 
 ### Pantalla de verificación
 Se permite **una sola** pantalla mínima y desechable, sin valor de producto,
@@ -95,14 +106,17 @@ Queda **explícitamente excluido** de esta unidad:
 | Chat de seguimiento | spec de funcionalidad |
 | Función de ML (raza por foto) | spec de funcionalidad |
 | Función de IA generativa | spec de funcionalidad |
-| Moderación de contenido | spec de funcionalidad (la arquitectura solo deja el punto de extensión) |
-| Notificaciones push | spec propia, posterior |
+| Política de moderación (proveedor, umbrales, mensajes) | spec 004 (aquí solo el punto de intercepción, A-20) |
+| Contenido y segmentación de las notificaciones push | spec 006 (aquí solo la base técnica, A-21) |
+| Textos de justificación y UX de permisos por pantalla | spec 003 (aquí solo el mecanismo, A-18) |
+| Política de sincronización por entidad y conflictos de negocio | spec 005 (aquí solo el outbox genérico, A-19) |
+| Aviso de privacidad, enlace a la landing y eliminación de cuenta | spec de ajustes (017) |
 | Entidades y tablas de negocio | spec de funcionalidad (aquí solo se prueba el mecanismo de persistencia) |
 | Endpoints de negocio | spec de funcionalidad (aquí solo el cliente y el endpoint de salud) |
 | Landing page y Google Analytics | otro repositorio |
 | Infraestructura de nube y Terraform | otro repositorio |
 | Backend | repositorio `backend-petmate-nosdd-aspnetcore` |
-| Publicación en producción de Google Play | spec de liberación, posterior |
+| Rollout abierto en producción y ficha de Play | spec de liberación, posterior (aquí solo track interno/cerrado, A-16) |
 
 **Ninguna regla de negocio de PetMate se escribe en esta unidad.**
 
@@ -127,7 +141,7 @@ Queda **explícitamente excluido** de esta unidad:
 | R-11 | La app debe permitir navegar entre pantallas conservando el estado al rotar y al volver atrás | RNF-16 |
 | R-12 | La app debe ofrecer modo claro y oscuro | RNF-16 |
 | R-13 | El número de versión de cada compilación debe provenir de la matriz de versionamiento | RNF-34 |
-| R-14 | La app debe funcionar en Android 7.0 (API 24) o superior | RNF-17 |
+| R-14 | La app debe funcionar en la versión mínima de Android que se confirme en Q-01 (hoy, API 24) | RNF-17 |
 
 ### No funcionales de ingeniería
 
@@ -142,6 +156,14 @@ Queda **explícitamente excluido** de esta unidad:
 | R-21 | El pipeline debe compilar, correr pruebas, revisar estilo, análisis estático y seguridad en cada cambio propuesto | RNF-33 |
 | R-22 | El artefacto de `release` debe estar minificado, sin depuración y sin registro verboso | RNF-01, RNF-15 |
 | R-23 | Todas las versiones de dependencias deben estar centralizadas en un único catálogo | RNF-20 |
+| R-24 | La compilación de `release` debe firmarse con secretos de CI y subirse a un track interno/cerrado de Google Play, con `versionCode` y `versionName` tomados de la matriz | RNF-34, constitución P7 y P11 |
+| R-25 | Toda comunicación con el backend en Azure debe ir por HTTPS; el cliente debe tolerar el balanceador (sin pinning rígido, health check) | RNF-01, RNF-29 |
+| R-26 | Ante fallos transitorios (timeout, 5xx, corte de red) el cliente debe reintentar con backoff y sin duplicar efectos; los 4xx no se reintentan | RNF-15, RNF-16 |
+| R-27 | Ningún contenido aportado por el usuario (texto, imagen, video) puede persistirse ni enviarse sin pasar por el punto de intercepción de moderación | RNF-01, constitución P13 |
+| R-28 | Los permisos del sistema se piden en el momento de uso, con explicación previa, y la app debe seguir siendo usable si se niegan | RNF-17, constitución P10 |
+| R-29 | Las escrituras hechas sin conexión deben encolarse de forma persistente y reconciliarse al recuperar la red, sin pérdidas ni duplicados | RNF-28, constitución P4 |
+| R-30 | El token de push debe registrarse tras el login y eliminarse en el logout; la recepción no debe depender de que la app esté abierta | RNF-32, constitución P9 |
+| R-31 | El pipeline debe ejecutar pruebas de seguridad que fallen ante tráfico en claro, componentes exportados sin justificar o secretos | RNF-33, constitución P7 |
 
 ---
 
@@ -173,6 +195,14 @@ Cada criterio es verificable por alguien que no escribió esta spec.
 | C-20 | Ninguna versión literal de dependencia aparece fuera del catálogo | `grep` sobre los archivos de build |
 | C-21 | La pantalla de verificación recorre pantalla → ViewModel → caso de uso → repositorio → base local y red | Comprobación manual en dispositivo |
 | C-22 | Las coberturas mínimas de la constitución §5 se cumplen | Reporte de cobertura |
+| C-23 | El pipeline genera un AAB firmado con la versión de la matriz y lo sube al track interno; la app se instala desde Google Play | Ejecución del workflow y descarga desde el track |
+| C-24 | La app solo habla con el backend de Azure por HTTPS y rechaza el tráfico en claro | Prueba del cliente e inspección de `network_security_config` |
+| C-25 | Con un doble de moderación que rechaza, ningún contenido se persiste ni se envía | Prueba del punto de intercepción, en verde |
+| C-26 | Con un permiso denegado, la app explica y sigue funcionando en modo degradado | Prueba instrumentada de permiso denegado |
+| C-27 | Un permiso se solicita al usar la función, no al arrancar la app | Prueba instrumentada y revisión del manifiesto |
+| C-28 | Una escritura sin conexión se envía al recuperar la red y no se duplica | Prueba del outbox con conectividad simulada |
+| C-29 | El token FCM se registra tras el login y se borra en el logout | Prueba del registro y del cierre de sesión |
+| C-30 | El cliente reintenta con backoff ante timeout o 5xx y no reintenta 4xx | Prueba con `MockWebServer` |
 
 ---
 
@@ -185,9 +215,13 @@ Cada criterio es verificable por alguien que no escribió esta spec.
 | G-03 | Conflicto entre `minSdk` 24 del andamio y el Android 8+ de los lineamientos | Medio | Pregunta abierta Q-01; se resuelve antes de ejecutar la tarea T-002 |
 | G-04 | La renovación automática de token con varias peticiones en paralelo provoca renovaciones duplicadas o un ciclo infinito | Alto | Renovación serializada con un solo reintento por petición; prueba específica (C-08) |
 | G-05 | Las versiones muy recientes del catálogo (AGP 9.x, Compose BOM 2026.02) pueden ser incompatibles entre sí o con Hilt | Medio | Verificar la compatibilidad en la tarea T-003 antes de agregar el resto; fijar versiones estables |
-| G-06 | El crédito y los límites de la cuenta de Google Play retrasan la verificación del despliegue | Medio | El pipeline deja el artefacto firmable listo; la subida se valida en la spec de liberación |
+| G-06 | El crédito y los límites de la cuenta de Google Play retrasan la verificación del despliegue | Medio | El AAB firmado se valida en local aunque Play tarde; el track interno se usa primero y la promoción queda en T-041 |
 | G-07 | Varios integrantes tocan el andamio al mismo tiempo y se pisan | Medio | El andamio lo construye una sola persona; las features entran después, en ramas separadas |
 | G-08 | Cifrar credenciales con la API estándar falla en algunos dispositivos y deja la app sin sesión | Medio | Degradación controlada y registrada; prueba en dispositivo físico |
+| G-09 | El balanceador de Azure rota certificados y un pinning rígido deja la app sin red | Alto | TLS estándar sin pinning, health check y prueba contra el entorno real (D-15) |
+| G-10 | La subida a Play falla por credenciales, track mal configurado o rechazo de revisión | Alto | Track interno primero, service account y checklist de política antes del cierre (T-040, T-041) |
+| G-11 | El outbox duplica escrituras al reconectar | Medio | Claves de idempotencia por operación y prueba de reconexión (C-28) |
+| G-12 | Firebase mal configurado impide arrancar la app | Medio | `google-services.json` por CI y arranque tolerante si falta push (T-039) |
 
 ---
 
@@ -196,9 +230,14 @@ Cada criterio es verificable por alguien que no escribió esta spec.
 **Externas a esta unidad:**
 - Acuerdo con el responsable del backend sobre la URL base, el endpoint de
   salud, el formato de error y el flujo de renovación de token.
-- Repositorio creado en la organización **PETMATE-APP'S** con ramas `main` y
+- Repositorio creado en la organización **PETMATE-APP-S** con ramas `main` y
   `develop` protegidas.
 - Secretos de CI/CD configurados en GitHub (credenciales de firma).
+- Cuenta de Google Play Console, track interno/cerrado y service account de
+  publicación.
+- Proyecto de Firebase con `google-services.json` para desarrollo y para CI.
+- URL base y health check del backend en Azure (Q-02) y certificado del
+  balanceador.
 
 **Internas (esta unidad habilita a):**
 - Todas las specs de funcionalidad posteriores dependen de que 001 esté
@@ -217,6 +256,8 @@ Cada criterio es verificable por alguien que no escribió esta spec.
 | Q-05 | ¿Se cambia el `applicationId` de `com.example.petmateedel` a uno definitivo antes de publicar? | Equipo | T-002 |
 | Q-06 | ¿Qué duración de caché se quiere por tipo de dato? (la arquitectura propone valores por omisión) | Equipo | T-018 |
 | Q-07 | ¿La matriz de versionamiento es un documento compartido para los tres repositorios o uno por repositorio? | Profesor / equipo | T-001 |
+| Q-08 | ¿Qué proyecto de Firebase se usa y quién administra `google-services.json`? | Equipo | T-039 |
+| Q-09 | ¿Qué cuenta de Play Console, track y service account se usan para publicar? | Equipo / profesor | T-040, T-041 |
 
 > Las preguntas abiertas **no se responden inventando**. Cada una bloquea la
 > tarea indicada hasta que se resuelva.

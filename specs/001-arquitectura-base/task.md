@@ -15,7 +15,7 @@ después. Un agente que implemente estas tareas sin autorización viola la
 constitución §4 ("Nunca: ejecutar tareas de `task.md` sin aprobación explícita
 del humano").
 
-Progreso: **0 / 32 tareas** · Fases completadas: **0 / 8**
+Progreso: **0 / 42 tareas** · Fases completadas: **0 / 9**
 
 ---
 
@@ -143,6 +143,7 @@ Puerta de calidad de toda tarea que toque código:
     dispositivo o emulador.
   - Archivos: `PetMateApplication.kt`, `MainActivity.kt`,
     `di/CoreModule.kt`, `app/src/main/AndroidManifest.xml`
+  - Nota: tocar `AndroidManifest.xml` requiere autorización (constitución §4).
 
 > **Punto de verificación F2:** la app arranca con Hilt · `AppResult` y
 > `AppError` probados · el dispatcher se sustituye en pruebas.
@@ -402,14 +403,14 @@ Puerta de calidad de toda tarea que toque código:
   - Verificación: ejecución del flujo con el AAB descargable (C-18); se
     confirma que el AAB está minificado y sin depuración.
   - Archivos: `.github/workflows/release.yml`, `app/build.gradle.kts`
-  - Nota: **no** se conecta la subida a Google Play en esta unidad (G-06); eso
-    es de la spec de liberación.
+  - Nota: aquí solo se genera y guarda el AAB; la subida al track interno es
+    T-040 (D-20). El rollout a producción queda fuera de la unidad.
 
 - [ ] **T-032** — Auditoría de seguridad y cierre de la unidad
   - Depende de: T-031
   - Aceptación: el agente `seguridad` audita el repositorio y no quedan
     hallazgos de severidad crítica ni alta; no hay secretos en el repositorio
-    ni en su historial; se repasa la lista de los 22 criterios de éxito de la
+    ni en su historial; se repasa la lista de los 30 criterios de éxito de la
     spec y todos están comprobados.
   - Verificación: reporte del agente `seguridad` (C-19); tabla de criterios de
     éxito completa en `memoria.md`.
@@ -417,6 +418,140 @@ Puerta de calidad de toda tarea que toque código:
 
 > **Punto de verificación F8:** pipeline en verde (C-16) · el pipeline reprueba
 > cuando debe (C-17) · `release` endurecido (C-18) · sin secretos (C-19).
+
+---
+
+## Fase F9 — Plataforma y publicación
+
+> Estas tareas se numeraron al final para no renumerar las existentes, pero **no
+> se ejecutan al final**: cada una debe entrar en la ola que marcan sus
+> dependencias. T-034 y T-035 van después de T-010; T-036 después de T-019;
+> T-039 después de T-015; T-040 y T-041 al cierre.
+
+- [ ] **T-033** — Red resiliente para el backend en Azure
+  - Depende de: T-012, T-005
+  - Aceptación: el cliente usa la URL base por entorno sobre HTTPS; tolera el
+    balanceador de Azure Container Apps (sin certificate pinning, health check
+    al arrancar); reintenta con backoff exponencial solo timeout, 5xx y corte
+    de red; los 4xx no se reintentan; cada escritura lleva clave de
+    idempotencia (D-15).
+  - Verificación: `./gradlew test` con `MockWebServer` para 5xx, timeout y 4xx
+    (C-24, C-30).
+  - Archivos: `data/remote/RetryInterceptor.kt`,
+    `data/remote/IdempotencyKey.kt`, `di/NetworkModule.kt`,
+    `test/.../data/remote/RetryInterceptorTest.kt`
+  - Nota: no se usa pinning; el balanceador rota certificados (G-09).
+
+- [ ] **T-034** — `PermissionController` (permisos en el momento de uso)
+  - Depende de: T-010, T-008
+  - Aceptación: existe el ciclo explicar → pedir → resultado para ubicación,
+    cámara, fotos y notificaciones; la justificación es `UiText`; si el usuario
+    niega, se devuelve un resultado tipado y la app sigue funcionando en modo
+    degradado; ningún permiso se pide al arrancar (D-16).
+  - Verificación: `./gradlew connectedAndroidTest` con permiso concedido y
+    denegado (C-26, C-27).
+  - Archivos: `core/permissions/PermissionController.kt`,
+    `core/permissions/PermissionResult.kt`, `di/CoreModule.kt`,
+    `androidTest/.../core/permissions/PermissionControllerTest.kt`
+
+- [ ] **T-035** — `ConnectivityObserver`
+  - Depende de: T-010
+  - Aceptación: expone `Flow<Boolean>` de conectividad, provisto por Hilt, con
+    implementación de prueba; no consulta la red por sondeo agresivo.
+  - Verificación: `./gradlew test` con un emisor falso de conectividad.
+  - Archivos: `core/connectivity/ConnectivityObserver.kt`,
+    `di/CoreModule.kt`, `test/.../core/connectivity/`
+
+- [ ] **T-036** — Outbox y reconciliación al recuperar la red
+  - Depende de: T-011, T-035, T-019
+  - Aceptación: toda escritura sin red se guarda en una tabla `outbox` de Room
+    con estado, clave de idempotencia y contador de reintentos; un
+    `WorkManager` con restricción de red la vacía al reconectar; una operación
+    no se aplica dos veces; al agotar reintentos queda en estado fallido y
+    visible para la UI (D-17).
+  - Verificación: `./gradlew test` con conectividad simulada: encola, reconecta,
+    envía una vez y no duplica (C-28).
+  - Archivos: `data/sync/OutboxEntity.kt`, `data/sync/OutboxDao.kt`,
+    `data/sync/SyncWorker.kt`, `data/sync/OutboxRepository.kt`,
+    `di/SyncModule.kt`, `test/.../data/sync/`
+  - Nota: agregar la tabla `outbox` cambia el esquema de Room y **requiere
+    autorización** (constitución §4).
+
+- [ ] **T-037** — `ContentModerationGateway` y su no-op
+  - Depende de: T-007, T-008
+  - Aceptación: interfaz en `domain` con un método por tipo de contenido
+    (`text`, `image`, `video`) que devuelve `AppResult<Verdict>`; la
+    implementación de esta unidad es un no-op explícito y registrado; el
+    contrato documenta que la implementación real llega en la spec 004 (D-18).
+  - Verificación: `./gradlew test` con un doble que aprueba y otro que rechaza.
+  - Archivos: `domain/moderation/ContentModerationGateway.kt`,
+    `domain/moderation/Verdict.kt`, `data/moderation/NoOpModerationGateway.kt`,
+    `di/ModerationModule.kt`, `test/.../data/moderation/`
+
+- [ ] **T-038** — Punto único de intercepción de subidas
+  - Depende de: T-037, T-012
+  - Aceptación: existe un único camino `ModeratedContent` que recibe el
+    contenido, llama al gateway y **solo si aprueba** lo persiste o lo envía;
+    un rechazo devuelve `AppError` y no deja rastro en Room ni en el servidor;
+    ninguna feature puede saltarse el camino sin romper la compilación.
+  - Verificación: `./gradlew test` con el gateway rechazando: no se persiste ni
+    se envía nada (C-25).
+  - Archivos: `data/moderation/ModeratedContent.kt`,
+    `domain/moderation/ModerationRejected.kt`,
+    `test/.../data/moderation/ModeratedContentTest.kt`
+
+- [ ] **T-039** — Base de notificaciones push (FCM)
+  - Depende de: T-010, T-015 · Bloqueada por: **Q-08**
+  - Aceptación: `PushRegistrar` obtiene el token tras el login y lo envía al
+    backend; en logout lo borra y llama a `FirebaseMessaging.deleteToken()`;
+    el servicio solo traduce el mensaje a un evento de dominio y navega por
+    deep link; si Firebase no está configurado, la app arranca igual (D-19).
+  - Verificación: `./gradlew test` del registro y del borrado; arranque sin
+    `google-services.json` en `debug` (C-29).
+  - Archivos: `data/push/PushRegistrar.kt`,
+    `data/push/PetMateMessagingService.kt`, `di/PushModule.kt`,
+    `app/src/main/AndroidManifest.xml`, `test/.../data/push/`
+  - Nota: tocar `AndroidManifest.xml` y configurar Firebase requiere
+    autorización (constitución §4).
+
+- [ ] **T-040** — Firma de `release` y subida al track interno
+  - Depende de: T-031 · Bloqueada por: **Q-09**
+  - Aceptación: `release.yml` firma el AAB con los secretos de GitHub, toma
+    `versionCode` y `versionName` de la matriz (T-001) y lo sube al track
+    interno; el flujo falla si la firma o la versión no coinciden (D-20).
+  - Verificación: ejecución del flujo con el AAB descargable y visible en el
+    track interno (C-23).
+  - Archivos: `.github/workflows/release.yml`, `app/build.gradle.kts`
+  - Nota: configurar la cuenta de Play, el service account y el flujo de CI
+    requiere autorización (constitución §4).
+
+- [ ] **T-041** — Promoción a prueba cerrada y checklist de Play
+  - Depende de: T-040 · Bloqueada por: **Q-09**
+  - Aceptación: el AAB del track interno se promueve a prueba cerrada; existe
+    `docs/play-release.md` con el checklist de ficha, data safety, política de
+    privacidad y eliminación de cuenta; la app se instala desde Play en un
+    dispositivo limpio.
+  - Verificación: descarga e instalación desde el track cerrado (C-23);
+    revisión del checklist.
+  - Archivos: `docs/play-release.md`
+  - Nota: el rollout a producción no se hace en esta unidad.
+
+- [ ] **T-042** — Pruebas de seguridad ejecutables
+  - Depende de: T-026, T-029
+  - Aceptación: el pipeline falla si se habilita tráfico en claro, si aparece
+    un componente `exported` sin justificación documentada o si se introduce un
+    secreto; las comprobaciones corren en cada PR y no solo en la auditoría
+    manual (R-31).
+  - Verificación: `./gradlew test` y ejecución del flujo con cada violación
+    provocada a propósito (C-19, C-24).
+  - Archivos: `test/.../security/`, `.github/workflows/pr.yml`,
+    `docs/seguridad-checklist.md`
+  - Nota: cambiar el CI requiere autorización (constitución §4).
+
+> **Punto de verificación F9:** AAB en el track interno (C-23) · HTTPS contra
+> Azure (C-24) · moderación rechaza (C-25) · permiso denegado no rompe
+> (C-26, C-27) · outbox sin duplicados (C-28) · token push limpio en logout
+> (C-29) · backoff correcto (C-30).
 
 ---
 
@@ -432,11 +567,13 @@ Puerta de calidad de toda tarea que toque código:
 | F6 Presentación | T-020 … T-022 | Tema, componentes, navegación |
 | F7 Verificación | T-023 … T-027 | Recorrido completo, sin conexión, capas, cobertura |
 | F8 Entrega | T-028 … T-032 | CI/CD, seguridad, artefacto firmado |
+| F9 Plataforma | T-033 … T-042 | Red Azure, permisos, outbox, moderación, push, Play |
 
 **Tareas bloqueadas por preguntas abiertas:** T-001 (Q-07), T-002 (Q-01, Q-05),
-T-005 (Q-02), T-013 (Q-03), T-017 (Q-04), T-018 (Q-06).
+T-005 (Q-02), T-013 (Q-03), T-017 (Q-04), T-018 (Q-06), T-039 (Q-08),
+T-040 y T-041 (Q-09).
 
-Esas seis preguntas deben resolverse con el profesor y con el responsable del
+Esas nueve preguntas deben resolverse con el profesor y con el responsable del
 backend antes de que empiece la ejecución.
 
 ---

@@ -3,7 +3,7 @@
 > Plan técnico de la unidad `001-arquitectura-base`
 > Estado: **redactado, pendiente de aprobación**
 > Depende de: [`spec.md`](spec.md) aprobada
-> Alineado con: [`constitution.md`](../../constitution.md) v1.0.0
+> Alineado con: [`constitution.md`](../../constitution.md) v1.1.0
 > Fecha: 27/10/2026
 
 Este documento responde **cómo**. El **qué** y el **por qué** están en la spec.
@@ -37,9 +37,14 @@ Este documento responde **cómo**. El **qué** y el **por qué** están en la sp
 │  repository/  implementaciones (red → Room → UI)        │
 │  session/     credenciales cifradas                     │
 │  cache/       política de expiración                    │
+│  sync/        outbox y reconciliación offline           │
+│  moderation/  punto de intercepción de contenido        │
+│  push/        token FCM y recepción                     │
 └─────────────────────────────────────────────────────────┘
 
 core/  Result, AppError, UiText, Logger, Dispatchers, Clock
+       permissions/   PermissionController
+       connectivity/  ConnectivityObserver
 di/    módulos de Hilt
 ```
 
@@ -77,6 +82,13 @@ no conoce a nadie.
 | K-23 | Pipeline de CI/CD | `.github/workflows` | Compilar, probar, seguridad, artefacto |
 | K-24 | Configuración por entorno | build | `debug` / `release`, URL base, endurecimiento |
 | K-25 | Pantalla de verificación | ui | Demostración desechable de extremo a extremo |
+| K-26 | Resiliencia de red | data/remote | Timeouts, reintentos con backoff e idempotencia |
+| K-27 | `PermissionController` | core/permissions | Pedir en uso, explicar antes y degradar si se niega |
+| K-28 | `ConnectivityObserver` | core/connectivity | `Flow<Boolean>` de conectividad para el outbox y la UI |
+| K-29 | `Outbox` / `SyncQueue` | data/sync | Cola persistente de escrituras y reconciliación al reconectar |
+| K-30 | `ContentModerationGateway` | domain + data/moderation | Punto único de intercepción; implementación no-op en esta unidad |
+| K-31 | `PushRegistrar` + servicio FCM | data/push | Token tras login, borrado en logout y recepción desacoplada |
+| K-32 | `PlayPublisher` | `.github/workflows` | Firma con secretos y subida al track interno/cerrado |
 
 ---
 
@@ -127,9 +139,15 @@ K-02 catálogo ┴──→ K-03 paquetes ──→ K-04 Result ──┬──�
 | **F6 — Presentación** | K-19, K-20, K-18 | K-19 con K-18 |
 | **F7 — Verificación** | K-25, K-21 | — |
 | **F8 — Entrega** | K-23 | — |
+| **F9 — Plataforma y publicación** | K-26, K-27, K-28, K-29, K-30, K-31, K-32 | K-27 con K-28; K-30 tras K-04 |
 
 Las pruebas (K-21) **no son una fase final**: cada componente desde F2 llega
 con sus pruebas. K-21 solo agrupa la infraestructura compartida.
+
+Los componentes K-26 a K-32 tampoco son una fase final: K-27 y K-28 deben
+existir antes de la primera pantalla que pida un permiso, K-29 antes de la
+primera escritura offline y K-30 antes de la primera subida de archivo. La
+fase F9 solo los agrupa para el cierre de la unidad.
 
 ---
 
@@ -217,7 +235,7 @@ ejecución; las tipadas fallan al compilar. Un Composable que recibe el
 **Decisión:** `buildConfigField` con la URL base: `debug` apunta al backend de
 desarrollo, `release` al de producción. Las URLs salen de `local.properties` o
 de secretos de CI, nunca del código.
-**Por qué:** cumple R-19 y D-10 sin `buildTypes` adicionales que compliquen el
+**Por qué:** cumple R-19 y R-25 sin `buildTypes` adicionales que compliquen el
 pipeline.
 
 ### D-11 — `release` endurecido
@@ -234,8 +252,8 @@ false }` en `release`: **hay que corregirlo** (tarea T-002).
   búsqueda de secretos).
 - `release.yml` al integrar a `main`: `bundleRelease` firmado con la versión de
   la matriz, y el artefacto queda guardado.
-**Por qué:** R-21 y P7. La subida a Google Play se conecta en la spec de
-liberación, no aquí (G-06).
+**Por qué:** R-21 y P7. La subida al track interno se hace en T-040 (D-20); el
+rollout a producción queda fuera de esta unidad.
 **Caché de Gradle** activada para que el pipeline no tarde de más.
 
 ### D-13 — Pruebas: JVM primero, dispositivo solo cuando es inevitable
@@ -255,12 +273,77 @@ feature`, registrada como deuda en `memoria.md`.
 andamio que se queda se convierte en código muerto que nadie se atreve a
 borrar.
 
+### D-15 — Red resiliente contra Azure Container Apps
+**Decisión:** URL base por `buildType` desde `local.properties` o secretos,
+TLS obligatorio, **sin certificate pinning** (el balanceador rota
+certificados), health check al arrancar y reintentos con backoff exponencial
+solo para timeout, 5xx y corte de red. Los 4xx no se reintentan. Cada
+operación de escritura lleva clave de idempotencia.
+**Por qué:** el backend vive detrás del balanceador de Azure; un pinning rígido
+convierte una rotación de certificado en una caída total. Reintentar un 4xx
+multiplica errores del cliente y puede duplicar escrituras.
+**Alternativa descartada:** interceptor ciego que reintenta todo — duplica
+efectos y castiga al servidor.
+
+### D-16 — Permisos en el momento de uso
+**Decisión:** `PermissionController` en `core/permissions` encapsula el ciclo
+explicar → pedir → resultado, con la justificación como `UiText`. Cada feature
+decide qué hacer si se niega; la app nunca bloquea el arranque por un permiso.
+**Por qué:** cumple P10 y R-28 sin repartir `ActivityResultContracts` por toda
+la UI. Un permiso pedido al arrancar se deniega más y no se puede explicar.
+**Alternativa descartada:** pedir todos los permisos en `MainActivity` — más
+simple de escribir, peor aceptación y sin contexto de uso.
+
+### D-17 — Escrituras offline con outbox
+**Decisión:** toda escritura que no puede ir a la red se guarda en una tabla
+`outbox` de Room con estado, clave de idempotencia y reintentos. Un
+`WorkManager` con restricción de red la vacía al reconectar; la reconciliación
+es por operación, no por entidad completa.
+**Por qué:** P4 exige que la app funcione sin conexión, pero la unidad anterior
+solo resolvía lectura. Sin outbox, una mascota creada en modo avión se pierde.
+**Alternativa descartada:** reintentar en memoria mientras la app vive — se
+pierde al cerrar la app y no sobrevive a la muerte del proceso.
+
+### D-18 — Punto único de moderación
+**Decisión:** interfaz `ContentModerationGateway` en `domain` con un método por
+tipo de contenido (`text`, `image`, `video`) que devuelve `AppResult<Verdict>`.
+La implementación de esta unidad es un **no-op explícito**; la real llega en la
+spec 004. Toda subida pasa por `ModeratedContent` antes de persistir o enviar.
+**Por qué:** P13 exige moderar antes de almacenar y el punto debe ser único;
+si cada feature llama a la API por su cuenta, la política se dispersa.
+**Alternativa descartada:** moderar dentro de cada repositorio — tres
+implementaciones y tres criterios distintos.
+
+### D-19 — Base de notificaciones push
+**Decisión:** `PushRegistrar` obtiene el token FCM tras el login y lo envía al
+backend; en logout lo borra y llama a `FirebaseMessaging.deleteToken()`. El
+`FirebaseMessagingService` solo traduce el mensaje a un evento de dominio y
+navega por deep link; **no** decide contenido ni segmentación (eso es spec 006).
+**Por qué:** el token sin sesión no sirve y un token huérfano tras logout es un
+riesgo de privacidad (P9).
+**Alternativa descartada:** registrar el token en `Application.onCreate` — se
+registra antes de saber quién es el usuario.
+
+### D-20 — Publicación en Play desde CI
+**Decisión:** `release.yml` firma con secretos (`KEYSTORE_BASE64`,
+`KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`), toma `versionCode` y
+`versionName` de la matriz (K-01) y sube el AAB al **track interno**, que se
+promueve a **prueba cerrada** tras la verificación. El rollout a producción no
+se automatiza en esta unidad.
+**Por qué:** cumple R-24 y el requisito de despliegue desde GitHub, y el track
+interno permite detectar un AAB roto sin exponerlo.
+**Alternativa descartada:** subir directo a producción — un error de firma o de
+versión llega a los evaluadores.
+**Nota:** la acción de subida es una dependencia de CI, no de la app; se
+autoriza como cualquier otra (constitución §4).
+
 ---
 
 ## 5. Dependencias a agregar
 
-Todas requieren autorización (constitución §4) y se declaran en
-`gradle/libs.versions.toml`. Se sigue la skill `agregar-dependencia`.
+Las dependencias de la app requieren autorización (constitución §4) y se
+declaran en `gradle/libs.versions.toml`; la acción de publicación es una
+dependencia de CI y se autoriza igual. Se sigue la skill `agregar-dependencia`.
 
 | Para | Artefactos |
 |---|---|
@@ -269,10 +352,15 @@ Todas requieren autorización (constitución §4) y se declaran en
 | Red | `retrofit`, `retrofit-kotlinx-serialization`, `okhttp`, `okhttp-logging-interceptor`, `kotlinx-serialization-json` |
 | Sesión | `security-crypto`, `datastore-preferences` |
 | Navegación | `navigation-compose` |
-| Imágenes | `coil-compose` |
 | Ciclo de vida | `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose` |
+| Offline | `work-runtime-ktx` (outbox y reconciliación) |
+| Push | `firebase-bom`, `firebase-messaging`, plugin `google-services` |
 | Pruebas | `mockk`, `turbine`, `kotlinx-coroutines-test`, `mockwebserver`, `room-testing`, `navigation-testing` |
 | Calidad | plugins de `ktlint` y `detekt` |
+| Publicación | acción de subida a Google Play en GitHub Actions (no es dependencia de la app) |
+
+**Fuera de esta unidad:** `coil-compose` se declara en la spec 007, que es la
+primera que carga imágenes; en 001 no tiene consumidor y no se agrega.
 
 **Primero se verifica la compatibilidad** del catálogo actual (AGP 9.2.1,
 Kotlin 2.2.10, Compose BOM 2026.02.01) con Hilt, Room y KSP (riesgo G-05). Si
@@ -291,6 +379,10 @@ decisión en `memoria.md`.
 | G-08 | Falla del cifrado de credenciales | D-07: degradación controlada y registrada, no caída |
 | — | La frontera entre capas no la impone el compilador (consecuencia de D-01) | `revisar-capas` en cada tarea y como paso del pipeline |
 | — | Tiempos de build largos con KSP | Caché de Gradle y configuración paralela; se mide en T-003 |
+| G-09 | Rotación de certificados del balanceador de Azure | D-15: TLS sin pinning y health check |
+| G-10 | Falla la subida a Play o la revisión | D-20: track interno, service account y checklist previo |
+| G-11 | El outbox duplica escrituras | Clave de idempotencia por operación y prueba de reconexión (C-28) |
+| G-12 | Firebase mal configurado impide arrancar | Arranque tolerante: sin push la app funciona (T-039) |
 
 ---
 
@@ -308,6 +400,7 @@ Entre fases, no se avanza sin esto:
 | F6 | Prueba de navegación (C-13) en verde; revisión visual de claro y oscuro (C-14) |
 | F7 | Recorrido manual de extremo a extremo (C-21); modo avión (C-12); coberturas (C-22) |
 | F8 | Pipeline en verde (C-16); el pipeline falla con una prueba rota a propósito (C-17); revisión del agente `seguridad` (C-19) |
+| F9 | AAB en el track interno (C-23); HTTPS contra Azure (C-24); moderación rechaza (C-25); permiso denegado no rompe (C-26, C-27); outbox sin duplicados (C-28); token push limpio en logout (C-29); backoff correcto (C-30) |
 
 ---
 
@@ -315,15 +408,21 @@ Entre fases, no se avanza sin esto:
 
 - No define ninguna entidad, tabla ni endpoint de negocio de PetMate.
 - No decide el proveedor de mapas, el modelo de ML ni el de IA generativa.
-- No configura notificaciones push.
-- No conecta la subida a Google Play.
+- No decide el contenido, la segmentación ni los textos de las notificaciones
+  push; solo deja el token, el registro y la recepción (D-19).
+- No implementa la moderación; solo su punto de intercepción (D-18).
+- No define la política de permisos por pantalla; solo el mecanismo (D-16).
+- No resuelve conflictos de negocio al sincronizar; solo el outbox genérico
+  (D-17).
+- No automatiza el rollout a producción de Google Play; llega hasta prueba
+  cerrada (D-20).
 - No toca el backend, la nube ni la landing.
 
 ---
 
 ## 9. Puerta de aprobación
 
-- [ ] Las decisiones D-01 a D-14 están revisadas.
+- [ ] Las decisiones D-01 a D-20 están revisadas.
 - [ ] El orden de fases es aceptable.
 - [ ] La lista de dependencias está autorizada (o se autoriza por tarea).
 - [ ] **Aprobado para pasar a `task.md`.**
