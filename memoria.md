@@ -11,10 +11,10 @@
 
 | Campo | Estado |
 |---|---|
-| Fase SDD actual | **SPECIFY / PLAN / TASK de las unidades 001 a 010 — redactados, pendientes de aprobación** |
+| Fase SDD actual | **SPECIFY / PLAN / TASK de las 20 unidades — redactados, pendientes de aprobación** |
 | Código implementado | Ninguno más allá del andamio que generó Android Studio |
-| Tareas ejecutadas | **0 — por instrucción del profesor, aún no se ejecutan** |
-| Siguiente paso | Revisión y aprobación de los documentos de 001 a 010. Las unidades 011 a 020 siguen sin abrir. |
+| Tareas ejecutadas | **0 de 280 — ninguna se ejecuta sin autorización** |
+| Siguiente paso | Revisión y aprobación de los documentos. **Urgente: resolver las preguntas abiertas con Miguel y arrancar la unidad 020 (Google Play), cuya fecha límite para iniciar la prueba cerrada es el 08/11/2026.** |
 
 ### Documentos listos
 - [x] `constitution.md` (v1.1.0)
@@ -149,6 +149,18 @@ Ramas: `main` (estable) y `develop`.
   funcionalidad específica de backend y móvil.
 
 ### 29/10/2026
+- El profesor autoriza crear **todas** las specs, no solo la arquitectura base.
+- Se escribe `specs/MAPA-CAPACIDADES.md` con las 20 unidades numeradas, sus
+  dependencias y el orden de construcción en olas.
+- Se amplía la unidad 001 de 32 a 42 tareas: Azure, Google Play, moderación,
+  push, permisos y sincronización offline.
+- Se redactan las unidades **002 a 020** con sus tres archivos cada una.
+  Total: **280 tareas definidas, 0 ejecutadas.**
+- Las unidades 002 a 010 se generaron con OpenCode; las 011 a 020 con Claude.
+- **Hallazgo de calendario:** la unidad 020 exige iniciar la prueba cerrada de
+  Google Play (12 testers, 14 días) **a más tardar el 08/11/2026** para llegar
+  publicados a la evaluación del 02/12/2026. Las tareas T-001, T-002, T-003 y
+  T-009 de esa unidad no dependen de código y pueden empezar de inmediato.
 - Se rectifica la unidad `001-arquitectura-base` tras la auditoría contra los
   lineamientos del profesor. Se sube `constitution.md` a **v1.1.0**: se agrega
   el principio P13 (moderación antes de almacenar), se amplía P4 con las
