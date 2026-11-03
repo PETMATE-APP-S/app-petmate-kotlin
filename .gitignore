@@ -28,3 +28,12 @@ replay_pid*.log
 /.idea/deploymentTargetSelector.xml
 /.idea/deviceManager.xml
 /.idea/appInsightsSettings.xml
+
+# Configuracion local de Android Studio (cada quien tiene la suya)
+/.idea/gradle.xml
+/.idea/misc.xml
+/.idea/compiler.xml
+/.idea/markdown.xml
+/.idea/vcs.xml
+/.idea/AndroidProjectSystem.xml
+/.idea/runConfigurations.xml
