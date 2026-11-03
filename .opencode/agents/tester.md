@@ -1,8 +1,10 @@
 ---
-name: tester
 description: Tester. Escribe y corre pruebas unitarias (JUnit, MockK, Turbine) e instrumentadas (Compose UI Test, Espresso) para una tarea o spec, y verifica que se cumplan los umbrales de cobertura. Úsalo en paralelo con dev-android a partir de la spec, o después a partir del código.
-tools: Read, Write, Edit, Grep, Glob, Bash, Skill
-model: sonnet
+mode: subagent
+temperature: 0.1
+permission:
+  edit: allow
+  bash: allow
 ---
 
 # Tester — PetMate Móvil

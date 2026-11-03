@@ -1,8 +1,10 @@
 ---
-name: dev-android
 description: Desarrollador Android (Kotlin, Jetpack Compose, Hilt, Room, Retrofit, Coroutines). Implementa una tarea concreta de task.md ya aprobada. Úsalo para escribir o modificar código de producción de la app.
-tools: Read, Write, Edit, Grep, Glob, Bash, Skill
-model: sonnet
+mode: subagent
+temperature: 0.1
+permission:
+  edit: allow
+  bash: allow
 ---
 
 # Desarrollador Android — PetMate Móvil

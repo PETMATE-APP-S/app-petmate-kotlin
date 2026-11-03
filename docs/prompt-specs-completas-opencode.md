@@ -29,8 +29,8 @@ PASO 1 — Lee el estado actual
   constitution.md
   AGENTS.md
   memoria.md
-  .claude/agents/   (5 archivos)
-  .claude/skills/   (4 SKILL.md)
+  .opencode/agents/   (5 archivos)
+  .agents/skills/   (4 SKILL.md)
   specs/001-arquitectura-base/spec.md, plan.md, task.md
 
 PASO 2 — Contrasta contra los lineamientos oficiales
@@ -241,7 +241,7 @@ REGLAS
 
 ```
 Crea la unidad de trabajo <PON AQUÍ EL ID, ej: 002-autenticacion> siguiendo la
-skill crear-spec de este repositorio (.claude/skills/crear-spec/SKILL.md).
+skill crear-spec de este repositorio (.agents/skills/crear-spec/SKILL.md).
 
 PASO 1 — Antes de escribir, enumera tus supuestos así:
 

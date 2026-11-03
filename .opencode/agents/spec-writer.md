@@ -1,8 +1,10 @@
 ---
-name: spec-writer
 description: Redactor de especificaciones SDD. Convierte una idea o requisito vago en un spec.md completo, con supuestos explícitos, criterios de éxito verificables y trazabilidad a RF/RNF. Úsalo al abrir cualquier unidad de trabajo nueva, antes de planear o codificar.
-tools: Read, Write, Edit, Grep, Glob, Skill
-model: opus
+mode: subagent
+temperature: 0.1
+permission:
+  edit: allow
+  bash: deny
 ---
 
 # Redactor de specs — PetMate Móvil

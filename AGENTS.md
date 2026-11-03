@@ -1,7 +1,7 @@
 # AGENTS.md — Reglas operativas para agentes de IA
 
-> Este archivo le dice a cualquier agente de IA (Claude Code, OpenCode, Warp,
-> Copilot…) cómo trabajar en este repositorio.
+> Este archivo le dice a cualquier agente de IA cómo trabajar en este
+> repositorio, sea cual sea la herramienta que se use.
 >
 > **Lee primero [`constitution.md`](constitution.md).** Es la autoridad máxima.
 > Este archivo explica *cómo operar*; la constitución define *qué es permitido*.
@@ -208,9 +208,9 @@ minuto; un agente que supone cuesta un día.**
 
 ## 7. Subagentes y skills
 
-- `.claude/agents/` — especialistas a los que delegar (arquitecto, desarrollador
+- `.opencode/agents/` — especialistas a los que delegar (arquitecto, desarrollador
   Android, tester, revisor de seguridad, escritor de specs).
-- `.claude/skills/` — procedimientos reutilizables (crear una spec, crear una
+- `.agents/skills/` — procedimientos reutilizables (crear una spec, crear una
   feature de UI, revisar capas, agregar una dependencia).
 
 Antes de resolver una tarea de forma artesanal, revisa si ya existe una skill
@@ -223,7 +223,7 @@ que la cubre y úsala.
 - Ramas: `feature/<id>-<descripción>` → `develop` → `main`.
 - Commits convencionales: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`,
   `chore:`, `ci:`.
-- **No agregues `Co-Authored-By: Claude` ni ninguna atribución a la IA.** Los
+- **No agregues ninguna línea de coautoría ni atribución a la IA.** Los
   commits van solo a nombre del integrante humano.
 - **No hagas `git push` ni abras PRs sin permiso explícito.**
 - Nunca uses `--no-verify` ni te brinques los hooks.

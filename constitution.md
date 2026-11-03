@@ -147,7 +147,7 @@ PetMateEdel/
 ├── constitution.md              ← este archivo
 ├── AGENTS.md                    ← reglas operativas para los agentes de IA
 ├── memoria.md                   ← estado y bitácora del proyecto
-├── .claude/
+├── .opencode/
 │   ├── agents/                  ← subagentes (especialistas)
 │   └── skills/                  ← skills (procedimientos reutilizables)
 ├── specs/
@@ -213,7 +213,7 @@ Una carpeta por capa. Un paquete por feature dentro de `ui`. Nada de carpetas
 - Silenciar errores con `@Suppress`, `try/catch` vacíos o `// TODO` como solución.
 - Implementar funcionalidad que no esté en una spec aprobada.
 - Ejecutar tareas de `task.md` sin aprobación explícita del humano.
-- Firmar commits con `Co-Authored-By: Claude` ni atribuir coautoría a la IA.
+- Firmar commits con líneas de coautoría ni atribuir autoría a la IA.
 - Mezclar este proyecto con el repositorio o la organización del proyecto gemelo.
 - Escribir `print`/`println` en código de producción; se usa el logger del proyecto.
 

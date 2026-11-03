@@ -52,8 +52,8 @@ PASO 1 — Lee estos archivos en este orden
   constitution.md
   AGENTS.md
   memoria.md
-  .claude/agents/          (los 5 archivos)
-  .claude/skills/          (los 4 SKILL.md)
+  .opencode/agents/          (los 5 archivos)
+  .agents/skills/          (los 4 SKILL.md)
   specs/001-arquitectura-base/spec.md
   specs/001-arquitectura-base/plan.md
   specs/001-arquitectura-base/task.md
@@ -136,8 +136,8 @@ REGLAS
 explicación generada ahí mismo.
 
 ```
-Lee constitution.md, AGENTS.md, memoria.md, los agentes de .claude/agents/, las
-skills de .claude/skills/ y los tres archivos de
+Lee constitution.md, AGENTS.md, memoria.md, los agentes de .opencode/agents/, las
+skills de .agents/skills/ y los tres archivos de
 specs/001-arquitectura-base/.
 
 Explícame, en español y en una página:
@@ -161,7 +161,7 @@ Si solo quieres ver los números en pantalla, en Warp:
 ```bash
 # Los archivos de la metodología existen
 ls constitution.md AGENTS.md memoria.md
-ls .claude/agents/ .claude/skills/
+ls .opencode/agents/ .agents/skills/
 ls specs/001-arquitectura-base/
 
 # 0 tareas ejecutadas (no debe imprimir nada)
@@ -192,8 +192,8 @@ Estás en el repo de la app móvil de PetMate. NO modifiques nada, solo verifica
 
 Lista qué existe de esto y en qué ruta:
   constitution.md, AGENTS.md, memoria.md
-  .claude/agents/ (deben ser 5)
-  .claude/skills/ (deben ser 4)
+  .opencode/agents/ (deben ser 5)
+  .agents/skills/ (deben ser 4)
   specs/001-arquitectura-base/spec.md, plan.md, task.md
 
 Hazlo con ls, sin abrir el contenido de los archivos.

@@ -57,12 +57,31 @@ PS> (Get-ChildItem app\src -Recurse -Filter *.kt).Count
 ## Nota sobre OpenCode
 
 Se intentó correr esta auditoría dentro de **OpenCode** (la herramienta que
-prefiere el profesor), pero la cuenta devolvió
-`Error: Free usage limit reached` incluso con un mensaje de una palabra y
-después de cambiar de modelo (Big Pickle → DeepSeek V4.1 Flash Free). El
-bloqueo es de la cuenta, no del modelo ni del proyecto.
+prefiere el profesor), pero devolvía `Error: Free usage limit reached` incluso
+con un mensaje de una palabra y tras cambiar de modelo (Big Pickle → DeepSeek
+V4.1 Flash Free). El bloqueo resultó ser de la instalación de OpenCode en
+Warp, que estaba desactualizada: al actualizarla volvió a funcionar con los
+modelos gratuitos.
 
-La verificación se hizo entonces en PowerShell, que da la misma evidencia sin
-depender de ningún servicio externo. El prompt para OpenCode queda listo en
-[`prompt-auditoria-opencode.md`](prompt-auditoria-opencode.md) para cuando la
-cuota se restablezca.
+Esta verificación se hizo en PowerShell, que da la misma evidencia sin
+depender de ningún servicio externo. Los prompts para OpenCode están en
+[`prompt-auditoria-opencode.md`](prompt-auditoria-opencode.md) y
+[`prompt-generar-specs-restantes.md`](prompt-generar-specs-restantes.md).
+
+---
+
+## Nota posterior (02/11/2026)
+
+Los subagentes y las skills se reorganizaron a rutas neutrales e
+interoperables después de esta verificación:
+
+| Antes | Ahora | Motivo |
+|---|---|---|
+| `.claude/skills/` | `.agents/skills/` | Ruta neutral que OpenCode lee de forma nativa |
+| `.claude/agents/` | `.opencode/agents/` | OpenCode solo lee los subagentes desde ahí |
+
+La salida de los comandos de arriba conserva las rutas que existían el
+27/10/2026, por eso menciona `.claude`. El contenido de los cinco subagentes y
+las cuatro skills es el mismo; solo cambiaron de carpeta y los subagentes
+adoptaron el formato de frontmatter de OpenCode (`mode`, `temperature`,
+`permission`).

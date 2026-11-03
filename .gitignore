@@ -37,3 +37,6 @@ replay_pid*.log
 /.idea/vcs.xml
 /.idea/AndroidProjectSystem.xml
 /.idea/runConfigurations.xml
+
+# Toda la carpeta del IDE
+/.idea/

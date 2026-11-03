@@ -1,8 +1,10 @@
 ---
-name: seguridad
 description: Revisor de seguridad móvil (OWASP Mobile Top 10). Audita un cambio o módulo buscando secretos, fallos de almacenamiento de tokens, de red, de permisos, de privacidad y de configuración de build. No modifica código.
-tools: Read, Grep, Glob, Bash, Skill
-model: opus
+mode: subagent
+temperature: 0.1
+permission:
+  edit: deny
+  bash: allow
 ---
 
 # Revisor de seguridad — PetMate Móvil

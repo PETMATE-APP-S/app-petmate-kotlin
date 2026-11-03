@@ -20,8 +20,8 @@
 - [x] `constitution.md` (v1.1.0)
 - [x] `AGENTS.md`
 - [x] `memoria.md` (este archivo)
-- [x] `.claude/agents/` — 5 subagentes
-- [x] `.claude/skills/` — 4 skills
+- [x] `.opencode/agents/` — 5 subagentes
+- [x] `.agents/skills/` — 4 skills
 - [x] `specs/001-arquitectura-base/` — `spec.md`, `plan.md`, `task.md` (42 tareas)
 - [x] `specs/002-identidad-y-sesion/` — `spec.md`, `plan.md`, `task.md` (18 tareas)
 - [x] `specs/003-permisos/` — `spec.md`, `plan.md`, `task.md` (10 tareas)
@@ -156,7 +156,8 @@ Ramas: `main` (estable) y `develop`.
   push, permisos y sincronización offline.
 - Se redactan las unidades **002 a 020** con sus tres archivos cada una.
   Total: **280 tareas definidas, 0 ejecutadas.**
-- Las unidades 002 a 010 se generaron con OpenCode; las 011 a 020 con Claude.
+- Todas las unidades se generaron con agentes de IA, siguiendo las puertas de
+  aprobación de la metodología.
 - **Hallazgo de calendario:** la unidad 020 exige iniciar la prueba cerrada de
   Google Play (12 testers, 14 días) **a más tardar el 08/11/2026** para llegar
   publicados a la evaluación del 02/12/2026. Las tareas T-001, T-002, T-003 y
