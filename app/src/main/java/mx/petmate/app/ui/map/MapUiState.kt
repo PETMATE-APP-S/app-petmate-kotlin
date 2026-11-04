@@ -9,16 +9,16 @@ enum class BusinessType { Vet, Shop, Spa }
 /**
  * Negocio tal como lo pinta el mapa.
  *
- * [mapX] y [mapY] son la posicion sobre el mapa ilustrado (800 × 1000 dp) de
- * la maqueta. Cuando la spec 010 fije el proveedor de mapas se cambian por
- * latitud y longitud; el resto de la tarjeta no cambia.
+ * [latitude] y [longitude] son coordenadas reales; el mapa las traduce a
+ * pixeles en cada movimiento. Antes eran una posicion fija sobre el mapa
+ * ilustrado de la maqueta.
  */
 data class MapBusiness(
     val id: String,
     val name: String,
     val type: BusinessType,
-    val mapX: Float,
-    val mapY: Float,
+    val latitude: Double,
+    val longitude: Double,
     /** Distancia ya formateada, por ejemplo "600 m" o "1.1 km". */
     val distance: String,
     val isOpen: Boolean,
@@ -28,7 +28,24 @@ data class MapBusiness(
     val hasWhatsApp: Boolean,
     /** Foto provisional desde recursos; con el backend sera una URL. */
     @DrawableRes val photo: Int? = null,
-)
+) {
+    /**
+     * Posicion sobre el mapa ilustrado de la maqueta (800 × 1000 dp).
+     *
+     * Solo la usan las previsualizaciones, que no pueden cargar el mapa real.
+     * El mapa de verdad proyecta [latitude] y [longitude] a pixeles.
+     */
+    val previewX: Float get() = (PREVIEW_CENTER_X + (longitude - PREVIEW_LON) / PREVIEW_SCALE).toFloat()
+    val previewY: Float get() = (PREVIEW_CENTER_Y - (latitude - PREVIEW_LAT) / PREVIEW_SCALE).toFloat()
+
+    private companion object {
+        const val PREVIEW_CENTER_X = 400.0
+        const val PREVIEW_CENTER_Y = 450.0
+        const val PREVIEW_LAT = 19.4326
+        const val PREVIEW_LON = -99.1332
+        const val PREVIEW_SCALE = 0.00018
+    }
+}
 
 /**
  * Estado de la pantalla de inicio con el mapa (spec 010).

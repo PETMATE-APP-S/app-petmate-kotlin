@@ -115,6 +115,8 @@ private fun MapContent(
     onRetryClick: () -> Unit,
     onTabSelected: (OwnerTab) -> Unit,
     modifier: Modifier = Modifier,
+    /** true solo en las previsualizaciones, que no pueden cargar el mapa real. */
+    useIllustratedMap: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -126,12 +128,26 @@ private fun MapContent(
                 .weight(1f)
                 .fillMaxWidth(),
         ) {
-            IllustratedMap(
-                businesses = if (uiState.isLoading) emptyList() else uiState.visibleBusinesses,
-                selectedBusinessId = uiState.selectedBusiness?.id,
-                showUserLocation = uiState.isLocationAvailable,
-                onBusinessClick = onBusinessClick,
-            )
+            val businessesOnMap =
+                if (uiState.isLoading) emptyList() else uiState.visibleBusinesses
+
+            // En las previsualizaciones se usa el mapa ilustrado, porque el
+            // real necesita red y ciclo de vida de Activity.
+            if (useIllustratedMap) {
+                IllustratedMap(
+                    businesses = businessesOnMap,
+                    selectedBusinessId = uiState.selectedBusiness?.id,
+                    showUserLocation = uiState.isLocationAvailable,
+                    onBusinessClick = onBusinessClick,
+                )
+            } else {
+                OsmMap(
+                    businesses = businessesOnMap,
+                    selectedBusinessId = uiState.selectedBusiness?.id,
+                    showUserLocation = uiState.isLocationAvailable,
+                    onBusinessClick = onBusinessClick,
+                )
+            }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -683,6 +699,7 @@ private fun MapPreview(uiState: MapUiState) {
             onHelpClick = {},
             onRetryClick = {},
             onTabSelected = {},
+            useIllustratedMap = true,
         )
     }
 }

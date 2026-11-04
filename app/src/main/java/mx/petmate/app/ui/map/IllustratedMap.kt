@@ -136,7 +136,10 @@ internal fun IllustratedMap(
                         business = business,
                         selected = business.id == selectedBusinessId,
                         onClick = { onBusinessClick(business.id) },
-                        modifier = Modifier.offset(x = (business.mapX - PIN_BOX / 2).dp, y = (business.mapY - PIN_BOX).dp),
+                        modifier = Modifier.offset(
+                            x = (business.previewX - PIN_BOX / 2).dp,
+                            y = (business.previewY - PIN_BOX).dp,
+                        ),
                     )
                 }
         }
@@ -252,14 +255,14 @@ private val ROADS_V = listOf(215f, 410f, 600f)
 // ---------- Marcadores ----------
 
 /** Caja tactil del marcador (48 dp); la punta queda en el centro inferior. */
-private const val PIN_BOX = 48f
+internal const val PIN_BOX = 48f
 
 /**
  * Marcador en forma de gota con el icono del tipo. El elegido crece 25 % y
  * muestra su nombre; los cerrados se ven deslavados.
  */
 @Composable
-private fun BusinessPin(
+internal fun BusinessPin(
     business: MapBusiness,
     selected: Boolean,
     onClick: () -> Unit,
@@ -327,7 +330,7 @@ private fun BusinessPin(
 
 /** Punto azul con halo que late: la ubicacion del usuario. */
 @Composable
-private fun UserLocationDot(modifier: Modifier = Modifier) {
+internal fun UserLocationDot(modifier: Modifier = Modifier) {
     val extra = MaterialTheme.petMateColors
     val pulse = rememberInfiniteTransition(label = "me")
     val halo by pulse.animateFloat(

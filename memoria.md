@@ -148,6 +148,27 @@ Ramas: `main` (estable) y `develop`.
 - Pendiente para la próxima clase: instrucciones sobre las specs de
   funcionalidad específica de backend y móvil.
 
+### 04/11/2026
+- Se integra el **mapa real**: `osmdroid` 6.1.20 con teselas de OpenStreetMap.
+  Se arrastra y hace zoom, y los marcadores de la maqueta se pintan encima,
+  reposicionados en cada movimiento.
+- **Decisión del proveedor** (cierra la Q-01 de la spec 010): osmdroid porque
+  no pide llave de API, registro ni tarjeta. Google Maps no cobra la carga del
+  mapa en Android, pero **sí exige habilitar facturación**, lo que choca con
+  el costo cero del profesor. MapLibre está activo, pero su wrapper de Compose
+  no está publicado en Maven Central y su API está en beta.
+- **Riesgo asumido**: osmdroid está archivado desde noviembre de 2024. Funciona
+  y es estable, pero no recibe actualizaciones. Si un Android futuro lo rompe,
+  se migra a MapLibre.
+- La política de OpenStreetMap se cumple en `OsmMapConfig`: User-Agent propio
+  (el genérico está prohibido y bloquean el tráfico), atribución visible que no
+  se puede ocultar, caché de 7 días y nada de descarga masiva.
+- `MapBusiness` pasa de `mapX`/`mapY` a `latitude`/`longitude` reales. El mapa
+  ilustrado de la maqueta se conserva para las previsualizaciones, que no
+  pueden cargar un mapa de red.
+- Permisos de ubicación agregados al manifiesto. La app funciona sin ellos:
+  centra el mapa en una posición por defecto.
+
 ### 03/11/2026
 - Se implementa el flujo de identidad: bienvenida, registro, login, logout y
   una pantalla interna provisional. **24 pruebas unitarias en verde.**
