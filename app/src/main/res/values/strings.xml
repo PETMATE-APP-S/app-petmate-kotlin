@@ -1,3 +1,50 @@
 <resources>
-    <string name="app_name">PetMateEdel</string>
+    <string name="app_name">PetMate</string>
+
+    <!-- Bienvenida -->
+    <string name="welcome_title">PetMate</string>
+    <string name="welcome_subtitle">El carnet de salud de tu mascota, siempre contigo</string>
+    <string name="welcome_login">Iniciar sesión</string>
+    <string name="welcome_register">Crear cuenta</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_submit">Entrar</string>
+    <string name="login_go_register">¿No tienes cuenta? Crear una</string>
+
+    <!-- Registro -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_submit">Crear cuenta</string>
+    <string name="register_go_login">¿Ya tienes cuenta? Iniciar sesión</string>
+    <string name="register_privacy">Acepto el aviso de privacidad</string>
+
+    <!-- Campos -->
+    <string name="field_name">Nombre</string>
+    <string name="field_email">Correo electrónico</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_password_confirmation">Confirmar contraseña</string>
+    <string name="field_show_password">Mostrar contraseña</string>
+    <string name="field_hide_password">Ocultar contraseña</string>
+
+    <!-- Inicio -->
+    <string name="home_greeting">Hola, %1$s</string>
+    <string name="home_signed_in">Ya estás dentro de PetMate</string>
+    <string name="home_placeholder">Aquí irá el mapa de veterinarias, tiendas y estéticas afiliadas.</string>
+    <string name="home_logout">Cerrar sesión</string>
+
+    <!-- Errores -->
+    <string name="error_required">Este campo es obligatorio</string>
+    <string name="error_invalid_email">El correo no tiene un formato válido</string>
+    <string name="error_password_too_short">La contraseña debe tener al menos %1$d caracteres</string>
+    <string name="error_passwords_do_not_match">Las contraseñas no coinciden</string>
+    <string name="error_privacy_required">Debes aceptar el aviso de privacidad</string>
+    <string name="error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
+    <string name="error_timeout">El servidor tardó demasiado. Inténtalo de nuevo.</string>
+    <string name="error_unauthorized">Correo o contraseña incorrectos</string>
+    <string name="error_email_taken">Ese correo ya está registrado</string>
+    <string name="error_server">Hubo un problema en el servidor. Inténtalo más tarde.</string>
+    <string name="error_unknown">Algo salió mal. Inténtalo de nuevo.</string>
+
+    <!-- Aviso del backend provisional -->
+    <string name="demo_notice">Modo de prueba: el servidor aún no está conectado. Cuenta de ejemplo: demo@petmate.mx / petmate123</string>
 </resources>

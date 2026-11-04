@@ -12,8 +12,8 @@
 | Campo | Estado |
 |---|---|
 | Fase SDD actual | **SPECIFY / PLAN / TASK de las 20 unidades — redactados, pendientes de aprobación** |
-| Código implementado | Ninguno más allá del andamio que generó Android Studio |
-| Tareas ejecutadas | **0 de 280 — ninguna se ejecuta sin autorización** |
+| Código implementado | **Identidad y sesión funcionando**: bienvenida, registro, login, logout y pantalla interna provisional. Backend simulado en memoria. |
+| Tareas ejecutadas | Parte de 001 y 002 (identidad). El resto sigue sin ejecutar. |
 | Siguiente paso | Revisión y aprobación de los documentos. **Urgente: resolver las preguntas abiertas con Miguel y arrancar la unidad 020 (Google Play), cuya fecha límite para iniciar la prueba cerrada es el 08/11/2026.** |
 
 ### Documentos listos
@@ -147,6 +147,28 @@ Ramas: `main` (estable) y `develop`.
   `docs/prompt-auditoria-opencode.md` para cuando se restablezca la cuota.
 - Pendiente para la próxima clase: instrucciones sobre las specs de
   funcionalidad específica de backend y móvil.
+
+### 03/11/2026
+- Se implementa el flujo de identidad: bienvenida, registro, login, logout y
+  una pantalla interna provisional. **24 pruebas unitarias en verde.**
+- **Backend simulado**: `FakeAuthRepository` guarda las cuentas en memoria
+  mientras la API no existe. La sesión sí se guarda cifrada, para cumplir
+  "sesión siempre viva". Para conectar el backend real basta poner
+  `USE_FAKE_BACKEND = false` en `app/build.gradle.kts`.
+  Cuenta de ejemplo: `demo@petmate.mx` / `petmate123`.
+- `AuthRepositoryImpl` (contra la API) queda escrito pero inactivo. Al
+  conectarlo hay que verificar rutas y nombres de campo contra el contrato
+  real (spec 002, Q-01).
+- **`applicationId` cambiado a `mx.petmate.app`** (antes `com.example.…`, que
+  Google Play rechaza). Resuelve la deuda D-01.
+- **Bajada de AGP 9.2.1 a 8.7.3**: Hilt todavía no soporta AGP 9 y el build
+  fallaba con "Android BaseExtension not found". También se bajó Gradle a
+  8.11.1, Compose BOM a 2024.12.01 y se fijó `org.gradle.java.home` al JDK de
+  Android Studio, porque AGP 8.7 no soporta JDK 25. Queda registrado por si
+  alguien se pregunta por qué no están las versiones más nuevas.
+- Dependencias agregadas con autorización: Hilt, Navigation Compose, Room,
+  Retrofit, OkHttp, kotlinx.serialization, DataStore, security-crypto, MockK,
+  Turbine y coroutines-test.
 
 ### 29/10/2026
 - El profesor autoriza crear **todas** las specs, no solo la arquitectura base.

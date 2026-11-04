@@ -1,0 +1,34 @@
+package mx.petmate.app.domain.repository
+
+import kotlinx.coroutines.flow.Flow
+import mx.petmate.app.core.result.AppResult
+import mx.petmate.app.domain.model.LoginCredentials
+import mx.petmate.app.domain.model.RegisterData
+import mx.petmate.app.domain.model.SessionState
+import mx.petmate.app.domain.model.User
+
+/**
+ * Contrato de identidad y sesion.
+ *
+ * Lo declara el dominio y lo implementa la capa de datos
+ * (constitution.md P3).
+ */
+interface AuthRepository {
+    /** Estado de la sesion, observable por la interfaz. */
+    val sessionState: Flow<SessionState>
+
+    /** Restaura la sesion guardada al arrancar la aplicacion. */
+    suspend fun restoreSession()
+
+    suspend fun register(data: RegisterData): AppResult<User>
+
+    suspend fun login(credentials: LoginCredentials): AppResult<User>
+
+    /**
+     * Cierra la sesion: invalida en el servidor y borra lo local.
+     *
+     * Los datos locales se borran siempre, aunque el servidor falle
+     * (spec 002, C-11).
+     */
+    suspend fun logout(): AppResult<Unit>
+}
