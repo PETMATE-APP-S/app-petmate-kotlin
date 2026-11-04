@@ -170,6 +170,25 @@ Ramas: `main` (estable) y `develop`.
   Retrofit, OkHttp, kotlinx.serialization, DataStore, security-crypto, MockK,
   Turbine y coroutines-test.
 
+### 04/11/2026
+- **Diseño de pantallas igual a la maqueta** (`PetMate_App.html`), sin lógica
+  nueva: splash, bienvenida (3 slides), login, registro y el **mapa como
+  pantalla de inicio** (spec 010, A-01). Login y registro conservan sus
+  ViewModels; solo cambió su `Content`.
+- **Tema de marca**: paleta clara y oscura de la maqueta en `ui/theme`, colores
+  extra en `MaterialTheme.petMateColors` y sin color dinámico. Fuentes
+  **Baloo 2** (títulos) y **Figtree** (texto) en `res/font`, convertidas de la
+  maqueta (licencia OFL). Íconos de la maqueta como vectores `ic_pm_*`.
+- Componentes compartidos en `ui/components` (botones, campo de texto, barra
+  inferior, `@PetMatePreviews` para ver claro y oscuro a la vez).
+- El mapa es **ilustrado** (el dibujo de la maqueta) con datos de ejemplo en
+  `MapSampleData`; `MapScreen` lleva un TODO para su `MapViewModel`. El mapa
+  real espera la decisión del SDK (`010/Q-01`).
+- Perfil aún no existe: la pestaña "Perfil" abre la pantalla provisional con
+  "Cerrar sesión" para no perder el logout.
+- No se pudo compilar en el entorno de la sesión (sin acceso a Google Maven);
+  falta correr `./gradlew build` y revisar las previews en Android Studio.
+
 ### 29/10/2026
 - El profesor autoriza crear **todas** las specs, no solo la arquitectura base.
 - Se escribe `specs/MAPA-CAPACIDADES.md` con las 20 unidades numeradas, sus
